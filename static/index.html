@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StressSync – AI Fusion Stress Assessment</title>
+  <meta name="description"
+    content="Real-time AI stress assessment fusing facial emotion detection with a personal health survey. Powered by ResNet50 + neural network." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────────────── */
+    :root {
+      --bg: rgba(225, 225, 225, 1);
+      --card: rgba(255, 255, 255, 1);
+      --glass: rgba(255, 255, 255, 1);
+      --border: #b794f4;
+      --bh: rgba(99, 179, 237, .3);
+      --accent: #63b3ed;
+      --accent2: #b794f4;
+      --green: #00d68f;
+      --yellow: #ffaa00;
+      --orange: #ff6b35;
+      --red: #ff3d71;
+      --tp: rgba(0, 0, 0, 1);
+      --ts: rgba(50, 50, 50, 1);
+      --tm: rgba(100, 100, 100, 1);
+      --r-lg: 25px;
+      --r-md: 25px;
+      --r-sm: 25px;
+      --ease: 0.22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--tp);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 25px;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 179, 237, .13), transparent 70%);
+      top: -180px;
+      left: -200px;
+    }
+
+    body::after {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(183, 148, 244, .13), transparent 70%);
+      bottom: -160px;
+      right: -150px;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px 90px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 60px 0 44px;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(1.35)
+      }
+    }
+
+    header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.3rem);
+      font-weight: 700;
+      line-height: 1.12;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    header p {
+      color: var(--ts);
+      font-size: 1.02rem;
+      max-width: 540px;
+      margin: 0 auto;
+      line-height: 1.75;
+    }
+
+    /* ── Progress ────────────────────────────────────────────────────────── */
+    .prog-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      padding: 10px 20px;
+      margin-bottom: 36px;
+      backdrop-filter: blur(12px);
+    }
+
+    .prog-label {
+      font-size: 13px;
+      color: var(--tm);
+      white-space: nowrap;
+    }
+
+    .prog-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 25px;
+      overflow: hidden;
+    }
+
+    .prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 25px;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    .prog-pct {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 34px;
+    }
+
+    /* ── Section card ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 32px 36px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(16px);
+      transition: all var(--ease);
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 179, 237, .12);
+      border-radius: 15px;
+    }
+
+    .sec-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--tp);
+      letter-spacing: .3px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sec-desc {
+      font-size: .82rem;
+      color: var(--tm);
+      margin-bottom: 22px;
+    }
+
+    /* ── Camera section ──────────────────────────────────────────────────── */
+    .cam-layout {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* Video preview */
+    .cam-preview-wrap {
+      position: relative;
+      flex: 0 0 300px;
+      max-width: 100%;
+      border-radius: var(--r-md);
+      overflow: hidden;
+      background: #0a0f1e;
+      border: 1px solid var(--border);
+      aspect-ratio: 4/3;
+    }
+
+    #cam-video,
+    #cam-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #cam-canvas {
+      z-index: 2;
+    }
+
+    .cam-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 1;
+      color: var(--tm);
+      font-size: .88rem;
+    }
+
+    .cam-placeholder .cam-icon {
+      font-size: 3rem;
+      opacity: .4;
+    }
+
+    /* Cam overlay badges */
+    .cam-overlay-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 3;
+      background: rgba(255, 255, 255, .2);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 25px;
+      padding: 5px 13px;
+      font-size: .78rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .cam-overlay-badge .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 25px;
+      background: #ff3d71;
+      animation: pulse 1.2s infinite;
+    }
+
+    /* Emotion display */
+    .cam-emotion-display {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      background: rgba(255, 255, 255, .2);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 12px;
+      padding: 8px 16px;
+      text-align: center;
+      display: none;
+      min-width: 160px;
+    }
+
+    .cam-emotion-label {
+      font-size: .72rem;
+      color: var(--tp);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    .cam-emotion-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--tp);
+    }
+
+    /* Cam stats panel */
+    .cam-stats {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cam-stat-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 18px;
+      box-shadow: 0 0 0 3px rgba(99, 179, 237, .12);
+      transition: all var(--ease);
+    }
+
+    .cam-stat-item:hover {
+      transform: scale(1.01);
+      border-color: var(--accent);
+      border-radius: 15px;
+    }
+
+    .cam-stat-label {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--tm);
+      margin-bottom: 6px;
+    }
+
+    .cam-stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--tp);
+    }
+
+    .cam-stat-sub {
+      font-size: .75rem;
+      color: var(--ts);
+      margin-top: 3px;
+    }
+
+    /* Frames bar */
+    .frames-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, .07);
+      border-radius: 25px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .frames-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 25px;
+      width: 0%;
+      transition: width .6s ease;
+    }
+
+    /* Start camera button */
+    #start-cam-btn {
+      margin-top: 6px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 25px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: transform var(--ease), box-shadow var(--ease);
+    }
+
+    #start-cam-btn:hover {
+      transform: scale(1.01);
+      box-shadow: 0 10px 28px rgba(99, 179, 237, .38);
+    }
+
+    #start-cam-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #cam-status {
+      font-size: .8rem;
+      color: var(--tm);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    #cam-status.active {
+      color: var(--green);
+    }
+
+    #cam-status.error {
+      color: var(--red);
+    }
+
+    /* Fusion weight pills */
+    .weight-pills {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .w-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, .3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 14px;
+      font-size: .8rem;
+      transition: all var(--ease);
+    }
+
+    .w-pill:hover {
+      transform: scale(1.1);
+    }
+
+    .w-pill .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 25px;
+    }
+
+    .w-pill span {
+      color: var(--ts);
+    }
+
+    .w-pill strong {
+      color: var(--tp);
+    }
+
+    /* ── Form grid ───────────────────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+      gap: 18px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-group label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--ts);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .field-group input,
+    .field-group select {
+      background: rgba(255, 255, 255, 1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      color: var(--tp);
+      font-family: 'Outfit', sans-serif;
+      font-size: .9rem;
+      padding: 11px 14px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: all var(--ease);
+    }
+
+    .field-group input::placeholder {
+      color: var(--tm);
+      font-style: italic;
+    }
+
+    .field-group input:hover,
+    .field-group select:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 1);
+      border-radius: 15px;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 0 0 3px rgba(99, 179, 237, .12);
+    }
+
+    .field-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23a0aec0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      background-color: rgba(255, 255, 255, 1);
+      border-radius: 25px;
+    }
+
+    .field-group select option {
+      background: #ffffff;
+      color: var(--tp);
+      border-radius: 25px;
+    }
+
+    /* ── Likert ──────────────────────────────────────────────────────────── */
+    .likert-wrap {
+      display: flex;
+      gap: 6px;
+    }
+
+    .lbtn {
+      flex: 1;
+      padding: 9px 4px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .05);
+      color: var(--tm);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--ease);
+      line-height: 1;
+    }
+
+    .lbtn:hover {
+      border-radius: 15px;
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .lbtn.on {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 2px 14px rgba(99, 179, 237, .35);
+    }
+
+    .likert-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: .68rem;
+      color: var(--tm);
+      margin-top: 4px;
+    }
+
+    /* ── Submit ──────────────────────────────────────────────────────────── */
+    .submit-wrap {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    #submit-btn {
+      position: relative;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 25px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 56px;
+      cursor: pointer;
+      letter-spacing: .3px;
+      overflow: hidden;
+      transition: transform var(--ease), box-shadow var(--ease), opacity var(--ease);
+    }
+
+    #submit-btn:hover {
+      transform: scale(1.01);
+      box-shadow: 0 12px 36px rgba(99, 179, 237, .40);
+    }
+
+    #submit-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spin {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, .4);
+      border-top-color: #fff;
+      border-radius: 25px;
+      animation: rotate .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    #submit-btn.loading .spin {
+      display: inline-block;
+    }
+
+    #submit-btn.loading .btxt {
+      opacity: .7;
+    }
+
+    @keyframes rotate {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Result panel ────────────────────────────────────────────────────── */
+    #result-panel {
+      display: none;
+      margin-top: 36px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 44px 40px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      animation: fadeUp .5s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .result-lbl {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--tm);
+      margin-bottom: 18px;
+    }
+
+    /* Main gauge */
+    .gauge-wrap {
+      position: relative;
+      width: 190px;
+      height: 190px;
+      margin: 0 auto 28px;
+    }
+
+    .gauge-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, .07);
+      stroke-width: 13;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke-width: 13;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.3s cubic-bezier(.4, 0, .2, 1), stroke .5s ease;
+      stroke-dasharray: 534;
+      stroke-dashoffset: 534;
+    }
+
+    .gauge-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-score {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .gauge-unit {
+      font-size: .75rem;
+      color: var(--tm);
+      margin-top: 4px;
+    }
+
+    .result-level {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .result-insight {
+      font-size: .9rem;
+      color: var(--ts);
+      max-width: 440px;
+      margin: 0 auto 30px;
+      line-height: 1.65;
+    }
+
+    /* Breakdown cards */
+    .breakdown {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .bd-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 16px 22px;
+      text-align: center;
+      min-width: 140px;
+      box-shadow: 0 2px 14px rgba(99, 179, 237, .35);
+    }
+
+    .bd-card:hover {
+      border-color: var(--accent);
+      transform: scale(1.02);
+    }
+
+    .bd-icon {
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+
+    .bd-label {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--tm);
+      margin-bottom: 6px;
+    }
+
+    .bd-score {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .bd-weight {
+      font-size: .72rem;
+      color: var(--ts);
+      margin-top: 3px;
+    }
+
+    /* Fusion bar */
+    .fusion-bar-wrap {
+      margin: 0 auto 30px;
+      max-width: 400px;
+    }
+
+    .fb-label {
+      font-size: .78rem;
+      color: var(--tm);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .fb-track {
+      height: 8px;
+      border-radius: 25px;
+      background: rgba(255, 255, 255, .07);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .fb-seg-survey {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), #9b72ef);
+      border-radius: 50px 0 0 50px;
+      transition: width 1s ease;
+    }
+
+    .fb-seg-camera {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #4facde);
+      border-radius: 0 50px 50px 0;
+      transition: width 1s ease;
+    }
+
+    .fb-legs {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+    }
+
+    .fb-leg {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .72rem;
+      color: var(--ts);
+    }
+
+    .fb-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 25px;
+    }
+
+    .reassess-btn {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      color: var(--ts);
+      font-family: 'Outfit', sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      padding: 10px 28px;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+
+    .reassess-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Error toast ─────────────────────────────────────────────────────── */
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 59, 71, .15);
+      border: 1px solid rgba(255, 59, 71, .4);
+      border-radius: 25px;
+      color: #ff6b7a;
+      font-size: .88rem;
+      padding: 12px 28px;
+      backdrop-filter: blur(16px);
+      z-index: 999;
+      animation: fadeUp .3s ease;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--tm);
+      font-size: .78rem;
+      line-height: 1.7;
+    }
+
+    @media(max-width:640px) {
+      .card {
+        padding: 22px 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cam-layout {
+        flex-direction: column;
+      }
+
+      .cam-preview-wrap {
+        flex: none;
+        width: 100%;
+      }
+
+      #result-panel {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <!-- ── Header ── -->
+    <header>
+      <h1>StressSync Fusion</h1>
+      <p>Your webcam reads your facial emotion while you fill the survey. Both signals are fused — just like the
+        original model — to give you one accurate stress score.</p>
+    </header>
+
+    <!-- ── Progress ── -->
+    <div class="prog-wrap">
+      <span class="prog-label">Survey completion</span>
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill"></div>
+      </div>
+      <span class="prog-pct" id="prog-pct">0%</span>
+    </div>
+
+    <form id="stress-form" novalidate>
+
+      <!-- ══ STEP 0 · Camera ═══════════════════════════════════════════════ -->
+      <div class="card" id="camera-card">
+        <div class="sec-title">Live Emotion Camera</div>
+        <div class="sec-desc">
+          Enable your camera so the ResNet50 model can read your facial emotion in real time.
+          Frames are analysed every 1.5 seconds and averaged into the final score.
+        </div>
+
+        <div class="cam-layout">
+          <!-- Video preview -->
+          <div class="cam-preview-wrap">
+            <video id="cam-video" autoplay playsinline muted></video>
+            <canvas id="cam-canvas"></canvas>
+            <div class="cam-placeholder" id="cam-placeholder">
+              <span>Camera not started</span>
+            </div>
+            <!-- Live badge -->
+            <div class="cam-overlay-badge" id="live-badge">
+              <span class="live-dot"></span>LIVE
+            </div>
+            <!-- Emotion display -->
+            <div class="cam-emotion-display" id="emotion-display">
+              <div class="cam-emotion-label">Detected Emotion</div>
+              <div class="cam-emotion-name" id="emotion-name">—</div>
+            </div>
+          </div>
+
+          <!-- Stats panel -->
+          <div class="cam-stats">
+            <div class="cam-stat-item">
+              <div class="cam-stat-label">Current Emotion</div>
+              <div class="cam-stat-value" id="stat-emotion">—</div>
+              <div class="cam-stat-sub" id="stat-faces">No face detected yet</div>
+            </div>
+            <div class="cam-stat-item">
+              <div class="cam-stat-label">Emotion Score (avg)</div>
+              <div class="cam-stat-value" id="stat-escore">—</div>
+              <div class="cam-stat-sub">Running average · 0–100 scale</div>
+              <div class="frames-bar">
+                <div class="frames-fill" id="frames-fill"></div>
+              </div>
+            </div>
+            <div class="cam-stat-item">
+              <div class="cam-stat-label">Frames Analysed</div>
+              <div class="cam-stat-value" id="stat-frames">0</div>
+              <div class="cam-stat-sub">More frames → more accurate</div>
+            </div>
+
+            <div class="weight-pills">
+              <div class="w-pill">
+                <div class="swatch" style="background:linear-gradient(135deg,#b794f4,#9b72ef)"></div>
+                <span>Survey</span><strong>75%</strong>
+              </div>
+              <div class="w-pill">
+                <div class="swatch" style="background:linear-gradient(135deg,#63b3ed,#4facde)"></div>
+                <span>Camera</span><strong>25%</strong>
+              </div>
+            </div>
+
+            <button type="button" id="start-cam-btn">Start Camera</button>
+            <div id="cam-status">Camera off — start to enable fusion</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STEP 1 · Personal Info ═════════════════════════════════════════ -->
+      <div class="card">
+        <div class="sec-title">Personal Information</div>
+        <div class="sec-desc">Demographic details help calibrate the stress model.</div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender" required>
+              <option value="" disabled selected>Select your gender…</option>
+              <option value="0">Female (0)</option>
+              <option value="1">Male (1)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" min="14" max="100"
+              placeholder="e.g. 21 — your current age in years" required />
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STEP 2 · Physical Symptoms ════════════════════════════════════ -->
+      <div class="card">
+        <div class="sec-title">Physical Symptoms</div>
+        <div class="sec-desc">Rate each symptom: 1 = Never / Not at all → 5 = Always / Severe</div>
+        <div class="form-grid" id="physical-grid"></div>
+      </div>
+
+      <!-- ══ STEP 3 · Psychological ════════════════════════════════════════ -->
+      <div class="card">
+        <div class="sec-title">Psychological & Emotional</div>
+        <div class="sec-desc">Rate each item: 1 = Rarely → 5 = Constantly</div>
+        <div class="form-grid" id="psych-grid"></div>
+      </div>
+
+      <!-- ══ STEP 4 · Academic / Social ════════════════════════════════════ -->
+      <div class="card">
+        <div class="sec-title">Academic, Social & Environmental</div>
+        <div class="sec-desc">Rate how much each factor stresses you: 1 = Not at all → 5 = Extreme</div>
+        <div class="form-grid" id="academic-grid"></div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-wrap">
+        <button type="submit" id="submit-btn">
+          <span class="spin"></span>
+          <span class="btxt">Analyse &amp; Fuse Results</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- ══ Result ═════════════════════════════════════════════════════════ -->
+    <div id="result-panel">
+      <div class="result-lbl">Fusion Result</div>
+
+      <!-- Main gauge -->
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 190 190">
+          <circle class="gauge-track" cx="95" cy="95" r="85" />
+          <circle class="gauge-fill" id="gauge-fill" cx="95" cy="95" r="85" />
+        </svg>
+        <div class="gauge-inner">
+          <span class="gauge-score" id="gauge-score">0</span>
+          <span class="gauge-unit">/ 100</span>
+        </div>
+      </div>
+
+      <div class="result-level" id="result-level">—</div>
+      <div class="result-insight" id="result-insight">—</div>
+
+      <!-- Breakdown -->
+      <div class="breakdown">
+        <div class="bd-card">
+          <div class="bd-label">Survey Score</div>
+          <div class="bd-score" id="bd-tab">—</div>
+          <div class="bd-weight">Weight 75%</div>
+        </div>
+        <div class="bd-card">
+          <div class="bd-label">Emotion Score</div>
+          <div class="bd-score" id="bd-emo">—</div>
+          <div class="bd-weight">Weight 25%</div>
+        </div>
+        <div class="bd-card">
+          <div class="bd-label">Fused Score</div>
+          <div class="bd-score" id="bd-fused">—</div>
+          <div class="bd-weight">Combined</div>
+        </div>
+      </div>
+
+      <!-- Fusion contribution bar -->
+      <div class="fusion-bar-wrap">
+        <div class="fb-label">Score composition</div>
+        <div class="fb-track">
+          <div class="fb-seg-survey" id="fb-survey" style="width:75%"></div>
+          <div class="fb-seg-camera" id="fb-camera" style="width:25%"></div>
+        </div>
+        <div class="fb-legs">
+          <div class="fb-leg">
+            <div class="fb-dot" style="background:#b794f4"></div>Survey (75%)
+          </div>
+          <div class="fb-leg">
+            <div class="fb-dot" style="background:#63b3ed"></div>Camera (25%)
+          </div>
+        </div>
+      </div>
+
+      <button class="reassess-btn" id="reassess-btn">← Reassess</button>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <div id="toast"></div>
+  <footer>
+    StressSync · Fusion: ResNet50 (emotion) + Tabular NN (survey) · Weights: 25% / 75%<br>
+    For informational purposes only — not a clinical tool.
+  </footer>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Feature metadata
+    // ═══════════════════════════════════════════════════════════════════════════
+    const PHYSICAL = [
+      { key: "stress_experience", label: "Stress Experience", lo: "Never", hi: "Always" },
+      { key: "heartbeat_palpitations", label: "Heartbeat Palpitations", lo: "Never", hi: "Very often" },
+      { key: "sleep_problems", label: "Sleep Problems", lo: "None", hi: "Severe" },
+      { key: "restlessness", label: "Restlessness", lo: "Never", hi: "Always" },
+      { key: "headaches", label: "Headaches", lo: "Rarely", hi: "Daily" },
+      { key: "weight_changes", label: "Weight Changes", lo: "None", hi: "Significant" },
+    ];
+    const PSYCH = [
+      { key: "anxiety_tension", label: "Anxiety & Tension", lo: "Rarely", hi: "Constantly" },
+      { key: "irritability", label: "Irritability", lo: "Never", hi: "Always" },
+      { key: "concentration_problems", label: "Concentration Problems", lo: "None", hi: "Severe" },
+      { key: "sadness_low_mood", label: "Sadness / Low Mood", lo: "Rarely", hi: "Constantly" },
+      { key: "health_issues", label: "Health Issues", lo: "Rarely", hi: "Always" },
+      { key: "loneliness_isolation", label: "Loneliness & Isolation", lo: "Rarely", hi: "Constantly" },
+    ];
+    const ACADEMIC = [
+      { key: "academic_overload", label: "Academic Overload", lo: "None", hi: "Overwhelming" },
+      { key: "peer_competition", label: "Peer Competition", lo: "None", hi: "Extreme" },
+      { key: "relationship_stress", label: "Relationship Stress", lo: "None", hi: "Severe" },
+      { key: "professor_difficulties", label: "Professor Difficulties", lo: "None", hi: "Severe" },
+      { key: "work_environment", label: "Work Environment Stress", lo: "Calm", hi: "Very stressful" },
+      { key: "lack_relaxation_time", label: "Lack of Relaxation Time", lo: "Plenty", hi: "None at all" },
+      { key: "home_environment", label: "Home Environment Stress", lo: "None", hi: "Severe" },
+      { key: "low_academic_confidence", label: "Low Academic Confidence", lo: "Confident", hi: "Very doubtful" },
+      { key: "subject_confidence", label: "Subject Confidence", lo: "High", hi: "Very low" },
+      { key: "academic_conflicts", label: "Academic Conflicts", lo: "None", hi: "Frequent" },
+      { key: "class_attendance", label: "Class Attendance Issues", lo: "None", hi: "Severe" },
+    ];
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Build Likert groups
+    // ═══════════════════════════════════════════════════════════════════════════
+    function buildLikert(feat) {
+      const div = document.createElement("div");
+      div.className = "field-group";
+      div.innerHTML = `<label>${feat.label}</label>`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "likert-wrap";
+
+      for (let v = 1; v <= 5; v++) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "lbtn";
+        b.dataset.key = feat.key; b.dataset.value = v;
+        b.textContent = v;
+        b.title = `${v} — rate ${feat.label.toLowerCase()}`;
+        b.addEventListener("click", () => {
+          wrap.querySelectorAll(".lbtn").forEach(x => x.classList.remove("on"));
+          b.classList.add("on");
+          updateProgress();
+        });
+        wrap.appendChild(b);
+      }
+
+      const ends = document.createElement("div");
+      ends.className = "likert-ends";
+      ends.innerHTML = `<span>1 – ${feat.lo}</span><span>5 – ${feat.hi}</span>`;
+
+      div.appendChild(wrap);
+      div.appendChild(ends);
+      return div;
+    }
+
+    function populateGrids() {
+      const pg = document.getElementById("physical-grid");
+      const sg = document.getElementById("psych-grid");
+      const ag = document.getElementById("academic-grid");
+      PHYSICAL.forEach(f => pg.appendChild(buildLikert(f)));
+      PSYCH.forEach(f => sg.appendChild(buildLikert(f)));
+      ACADEMIC.forEach(f => ag.appendChild(buildLikert(f)));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Progress
+    // ═══════════════════════════════════════════════════════════════════════════
+    const TOTAL_FIELDS = 2 + PHYSICAL.length + PSYCH.length + ACADEMIC.length;
+
+    function updateProgress() {
+      let filled = 0;
+      if (document.getElementById("gender").value) filled++;
+      if (document.getElementById("age").value) filled++;
+      document.querySelectorAll(".lbtn.on").forEach(() => filled++);
+      const pct = Math.round((filled / TOTAL_FIELDS) * 100);
+      document.getElementById("prog-fill").style.width = pct + "%";
+      document.getElementById("prog-pct").textContent = pct + "%";
+    }
+    document.getElementById("gender").addEventListener("change", updateProgress);
+    document.getElementById("age").addEventListener("input", updateProgress);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Camera & emotion detection
+    // ═══════════════════════════════════════════════════════════════════════════
+    let emotionScores = [];       // running list of per-frame scores
+    let frameCount = 0;
+    let captureTimer = null;
+    let cameraActive = false;
+
+    const video = document.getElementById("cam-video");
+    const canvas = document.getElementById("cam-canvas");
+    const ctx = canvas.getContext("2d");
+
+    const EMOTION_EMOJI = {
+      Anger: "😠", Disgust: "🤢", Fear: "😨",
+      Happiness: "😊", Sadness: "😢", Surprise: "😲", Neutral: "😐"
+    };
+
+    document.getElementById("start-cam-btn").addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        await video.play();
+
+        cameraActive = true;
+        document.getElementById("cam-placeholder").style.display = "none";
+        document.getElementById("live-badge").style.display = "flex";
+        document.getElementById("emotion-display").style.display = "flex";
+        document.getElementById("start-cam-btn").disabled = true;
+        document.getElementById("start-cam-btn").textContent = "🟢 Camera Active";
+        setStatus("active", "⬤ Camera active — analysing every 1.5s");
+
+        // Sync canvas size after metadata loads
+        video.addEventListener("loadedmetadata", () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }, { once: true });
+
+        captureTimer = setInterval(sendFrame, 100);
+      } catch (err) {
+        setStatus("error", "✗ Camera access denied: " + err.message);
+      }
+    });
+
+    async function sendFrame() {
+      if (!cameraActive || video.readyState < 2) return;
+
+      // Draw video frame onto canvas → get JPEG base64
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const b64 = canvas.toDataURL("image/jpeg", 0.7);
+
+      try {
+        const res = await fetch("/api/emotion-frame", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ frame: b64 })
+        });
+        const data = await res.json();
+        if (data.error) return;
+
+        frameCount++;
+        if (data.emotion_score > 0) emotionScores.push(data.emotion_score);
+
+        const avgScore = emotionScores.length
+          ? emotionScores.reduce((a, b) => a + b, 0) / emotionScores.length
+          : 0;
+
+        // Update UI
+        const emo = data.emotion ? `${EMOTION_EMOJI[data.emotion] || ""} ${data.emotion}` : "No face";
+        document.getElementById("stat-emotion").textContent = emo;
+        document.getElementById("emotion-name").textContent = data.emotion || "No face";
+        document.getElementById("stat-faces").textContent =
+          data.faces === 0 ? "No face detected" :
+            data.faces === 1 ? "1 face detected" : `${data.faces} faces detected`;
+        document.getElementById("stat-escore").textContent = avgScore.toFixed(1);
+        document.getElementById("stat-frames").textContent = frameCount;
+        document.getElementById("frames-fill").style.width = Math.min(frameCount * 5, 100) + "%";
+      } catch (_) { }
+    }
+
+    function setStatus(cls, msg) {
+      const el = document.getElementById("cam-status");
+      el.className = "active" === cls ? "active" : cls === "error" ? "error" : "";
+      el.textContent = msg;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Collect form data
+    // ═══════════════════════════════════════════════════════════════════════════
+    function collectTabular() {
+      const d = {};
+      d.gender = parseFloat(document.getElementById("gender").value || "0");
+      d.age = parseFloat(document.getElementById("age").value || "19");
+      [...PHYSICAL, ...PSYCH, ...ACADEMIC].forEach(f => {
+        const sel = document.querySelector(`.lbtn.on[data-key="${f.key}"]`);
+        d[f.key] = sel ? parseFloat(sel.dataset.value) : 3;
+      });
+      return d;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Insights
+    // ═══════════════════════════════════════════════════════════════════════════
+    const INSIGHTS = {
+      Low: "Great news! Your fused stress score is well within healthy ranges. Your facial expression and survey responses both indicate you're managing well.",
+      Moderate: "You're experiencing moderate stress. Your camera readings and survey suggest some tension — consider short breaks, better sleep, or mindfulness exercises.",
+      High: "Your fused score flags elevated stress. Both your emotional expressions and survey responses point to significant stressors. Reach out to a counsellor or trusted person.",
+      Severe: "Your fused score indicates severe stress. The combined signal from your face and survey is concerning — please consider speaking with a healthcare professional soon."
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Gauge animation
+    // ═══════════════════════════════════════════════════════════════════════════
+    function animateGauge(score, color) {
+      const fill = document.getElementById("gauge-fill");
+      const C = 2 * Math.PI * 85; // ≈534
+      fill.style.stroke = color;
+      fill.style.strokeDashoffset = C - (score / 100) * C;
+
+      const el = document.getElementById("gauge-score");
+      let cur = 0;
+      const step = score / 70;
+      const t = setInterval(() => {
+        cur = Math.min(cur + step, score);
+        el.textContent = Math.round(cur);
+        if (cur >= score) clearInterval(t);
+      }, 16);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Submit
+    // ═══════════════════════════════════════════════════════════════════════════
+    document.getElementById("stress-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      btn.classList.add("loading"); btn.disabled = true;
+
+      const avgEmoScore = emotionScores.length
+        ? emotionScores.reduce((a, b) => a + b, 0) / emotionScores.length
+        : 50; // fallback if camera not used
+
+      const payload = {
+        tabular: collectTabular(),
+        emotion_score: avgEmoScore
+      };
+
+      try {
+        const res = await fetch("/api/fused", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+
+        // Populate result panel
+        document.getElementById("result-level").textContent = json.level + " Stress";
+        document.getElementById("result-level").style.color = json.color;
+        document.getElementById("result-insight").textContent = INSIGHTS[json.level];
+
+        document.getElementById("bd-tab").textContent = json.tab_score.toFixed(1);
+        document.getElementById("bd-emo").textContent = json.emotion_score.toFixed(1);
+        document.getElementById("bd-fused").textContent = json.fused_score.toFixed(1);
+        document.getElementById("bd-fused").style.color = json.color;
+
+        // Contribution bar — proportional to weighted contribution
+        const surveyContrib = (0.75 * json.tab_score) / json.fused_score * 100;
+        const cameraContrib = (0.25 * json.emotion_score) / json.fused_score * 100;
+        document.getElementById("fb-survey").style.width = surveyContrib.toFixed(1) + "%";
+        document.getElementById("fb-camera").style.width = cameraContrib.toFixed(1) + "%";
+
+        // Reset gauge & show panel
+        document.getElementById("gauge-fill").style.strokeDashoffset = "534";
+        document.getElementById("gauge-score").textContent = "0";
+        const panel = document.getElementById("result-panel");
+        panel.style.display = "block";
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        setTimeout(() => animateGauge(json.fused_score, json.color), 350);
+      } catch (err) {
+        toast("Prediction failed: " + err.message);
+      } finally {
+        btn.classList.remove("loading"); btn.disabled = false;
+      }
+    });
+
+    document.getElementById("reassess-btn").addEventListener("click", () => {
+      document.getElementById("result-panel").style.display = "none";
+      document.getElementById("stress-form").scrollIntoView({ behavior: "smooth" });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Toast
+    // ═══════════════════════════════════════════════════════════════════════════
+    function toast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 4500);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Init
+    // ═══════════════════════════════════════════════════════════════════════════
+    populateGrids();
+    updateProgress();
+  </script>
+</body>
+
+</html>

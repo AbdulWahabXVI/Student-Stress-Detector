@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large machine learning models (highly recommended to exclude to avoid repository bloat)
+# These files are ~94MB each and should be uploaded to Git LFS or shared via a separate download link.
+best_rafdb_resnet50.pth
+ema_weights.pth
+
+# Tabular model weights and dataset (optional: can keep or ignore)
+# student_stress_model.pth
+# *.csv
