@@ -80,3 +80,13 @@ python fusion.py
 - Go to the terminal/command line and answer the survey questions.
 - Once completed, the camera window will overlay your real-time fused stress score.
 - Press **Q** on the camera window to exit.
+
+## 📊 Dataset Citation & License
+The tabular training data used in this project is based on the **Stress Indicators Dataset for Mental Health Classification** published on Mendeley Data.
+
+If you use or reference this dataset, please cite the owners as follows to comply with the license:
+
+*   **Citation:** 
+    > Mondol, Md Mahabub Rana; Kabir, Md Alamgir (2023), “Stress Indicators Dataset for Mental Health Classification”, Mendeley Data, V2, doi: 10.17632/2gsjv8m7ch.2
+*   **Original Source:** [Mendeley Data Repository (doi: 10.17632/2gsjv8m7ch.2)](https://data.mendeley.com/datasets/2gsjv8m7ch/2)
+*   **License:** [CC BY 4.0 (Creative Commons Attribution 4.0 International)](https://creativecommons.org/licenses/by/4.0/)
